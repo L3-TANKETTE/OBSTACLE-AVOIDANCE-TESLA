@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boeing 737-800 Startup Training</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #0a0a0a;
+            color: white;
+            overflow: hidden;
+        }
+
+        .cockpit {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            grid-template-rows: auto 1fr;
+            height: 100vh;
+            gap: 8px;
+            padding: 8px;
+        }
+
+        .title {
+            grid-column: 1 / -1;
+            text-align: center;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            padding: 12px;
+            border-radius: 8px;
+            border: 2px solid #333;
+        }
+
+        .panel {
+            background: linear-gradient(145deg, #2a2a3e, #1f1f32);
+            border: 3px solid #444;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        /* 737 Style Switches */
+        .switch-panel {
+            background: linear-gradient(145deg, #3a3a4e, #2f2f42);
+            border: 2px solid #555;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            box-shadow: inset 0 1px 4px rgba(0,0,0,0.4);
+        }
+
+        .switch-row {
+            display: flex;
+            align-items: center;
+            margin: 12px 0;
+            justify-content: space-between;
+        }
+
+        .switch-label {
+            font-size: 11px;
+            color: #ccc;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            min-width: 80px;
+        }
+
+        /* Toggle Switch (like 737) */
+        .toggle-switch {
+            width: 50px;
+            height: 20px;
+            background: linear-gradient(145deg, #666, #444);
+            border: 2px solid #333;
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+            transition: all 0.2s;
+        }
+
+        .toggle-switch.on {
+            background: linear-gradient(145deg, #00aa00, #008800);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 0 8px rgba(0,170,0,0.3);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 1px;
+            left: 1px;
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(145deg, #fff, #ddd);
+            border-radius: 50%;
+            transition: transform 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .toggle-switch.on::after {
+            transform: translateX(28px);
+        }
+
+        /* Rotary Switch (Engine Start) */
+        .rotary-switch {
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle, #555 0%, #333 100%);
+            border: 3px solid #222;
+            border-radius: 50%;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.4), inset 0 1px 3px rgba(255,255,255,0.1);
+            transition: all 0.2s;
+        }
+
+        .rotary-switch.on {
+            background: radial-gradient(circle, #ff6600 0%, #cc4400 100%);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.4), inset 0 1px 3px rgba(255,255,255,0.2), 0 0 8px rgba(255,102,0,0.4);
+        }
+
+        .rotary-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 50%;
+            width: 2px;
+            height: 12px;
+            background: #fff;
+            transform: translateX(-50%);
+            border-radius: 1px;
+        }
+
+        .rotary-switch::before {
+            content: 'GRD';
+            position: absolute;
+            bottom: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 8px;
+            color: #888;
+        }
+
+        /* Push Button (Start Engines) */
+        .push-button {
+            width: 100%;
+            height: 50px;
+            background: linear-gradient(145deg, #ff4400, #cc3300);
+            border: 3px solid #aa2200;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            margin: 8px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3), inset 0 1px 3px rgba(255,255,255,0.2);
+            transition: all 0.1s;
+        }
+
+        .push-button:hover:not(:disabled) {
+            background: linear-gradient(145deg, #ff5511, #dd3300);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3), inset 0 1px 3px rgba(255,255,255,0.2);
+        }
+
+        .push-button:active:not(:disabled) {
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .push-button:disabled {
+            background: linear-gradient(145deg, #666, #444);
+            border-color: #333;
+            color: #888;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .push-button.success {
+            background: linear-gradient(145deg, #00aa00, #008800);
+            border-color: #006600;
+        }
+
+        /* Engine Display */
+        .mfd {
+            background: linear-gradient(145deg, #000, #111);
+            border: 4px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: inset 0 3px 10px rgba(0,0,0,0.5);
+        }
+
+        .engine-display {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .engine {
+            text-align: center;
+            border: 2px solid #333;
+            padding: 15px;
+            border-radius: 10px;
+            background: linear-gradient(145deg, #0a0a0a, #1a1a1a);
+            min-width: 160px;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
+        }
+
+        .engine h3 {
+            color: #00ff00;
+            margin-bottom: 10px;
+            font-size: 16px;
+            text-shadow: 0 0 4px rgba(0,255,0,0.3);
+        }
+
+        .gauge {
+            width: 120px;
+            height: 120px;
+            border: 3px solid #333;
+            border-radius: 50%;
+            position: relative;
+            margin: 10px auto;
+            background: radial-gradient(circle, #000 0%, #1a1a1a 100%);
+            box-shadow: inset 0 3px 8px rgba(0,0,0,0.5);
+        }
+
+        .gauge::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            right: 5px;
+            bottom: 5px;
+            border: 1px solid #444;
+            border-radius: 50%;
+        }
+
+        .gauge-needle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 3px;
+            height: 45px;
+            background: linear-gradient(to top, #ff0000, #ff6666);
+            transform-origin: bottom center;
+            transform: translate(-50%, -100%) rotate(-135deg);
+            transition: transform 0.3s ease;
+            border-radius: 2px;
+            box-shadow: 0 0 4px rgba(255,0,0,0.4);
+        }
+
+        .gauge-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 12px;
+            height: 12px;
+            background: radial-gradient(circle, #888, #333);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            border: 1px solid #222;
+        }
+
+        .gauge-labels {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            font-size: 9px;
+            color: #00ff00;
+            font-weight: bold;
+        }
+
+        .rpm-value {
+            color: #00ff00;
+            font-size: 22px;
+            font-weight: bold;
+            margin-top: 10px;
+            text-shadow: 0 0 4px rgba(0,255,0,0.3);
+        }
+
+        /* EICAS Display */
+        .eicas {
+            background: #000;
+            border: 3px solid #333;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.5);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .eicas-line {
+            color: #00ff00;
+            font-size: 12px;
+            margin: 3px 0;
+            text-shadow: 0 0 2px rgba(0,255,0,0.3);
+        }
+
+        .eicas-warning {
+            color: #ff3333;
+            text-shadow: 0 0 4px rgba(255,51,51,0.5);
+            animation: blink 1s infinite;
+        }
+
+        .eicas-caution {
+            color: #ff9900;
+            text-shadow: 0 0 4px rgba(255,153,0,0.5);
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        /* Status Panel */
+        .status {
+            padding: 15px;
+            background: linear-gradient(145deg, #1a1a2e, #16213e);
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 2px solid #333;
+        }
+
+        .checklist {
+            list-style: none;
+        }
+
+        .checklist li {
+            padding: 6px 8px;
+            font-size: 12px;
+            margin: 2px 0;
+            border-radius: 4px;
+            border-left: 3px solid transparent;
+        }
+
+        .checklist li.complete {
+            color: #00ff00;
+            background: rgba(0,255,0,0.1);
+            border-left-color: #00ff00;
+        }
+
+        .checklist li.current {
+            color: #ffff00;
+            background: rgba(255,255,0,0.1);
+            border-left-color: #ffff00;
+            font-weight: bold;
+        }
+
+        .checklist li.pending {
+            color: #666;
+            background: rgba(102,102,102,0.1);
+        }
+
+        .warning, .caution, .success {
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+            text-align: center;
+            font-weight: bold;
+            animation: fadeIn 0.3s;
+        }
+
+        .warning {
+            background: linear-gradient(145deg, #ff3333, #cc0000);
+            border: 2px solid #aa0000;
+            box-shadow: 0 0 8px rgba(255,51,51,0.3);
+        }
+
+        .caution {
+            background: linear-gradient(145deg, #ff9900, #cc6600);
+            border: 2px solid #aa5500;
+            box-shadow: 0 0 8px rgba(255,153,0,0.3);
+        }
+
+        .success {
+            background: linear-gradient(145deg, #00aa00, #008800);
+            border: 2px solid #006600;
+            box-shadow: 0 0 8px rgba(0,170,0,0.3);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2, h3 {
+            text-shadow: 0 0 4px rgba(255,255,255,0.2);
+        }
+
+        /* Light indicators */
+        .indicator-light {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #333;
+            border: 1px solid #222;
+            margin-left: 8px;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .indicator-light.on {
+            background: #00ff00;
+            box-shadow: 0 0 8px rgba(0,255,0,0.6), inset 0 1px 2px rgba(255,255,255,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="cockpit">
+        <div class="title">
+            <h1>Boeing 737-800 Engine Startup Training</h1>
+            <p>Realistic Cockpit Controls • Follow Standard Operating Procedures</p>
+        </div>
+
+        <!-- Left Panel - Realistic 737 Controls -->
+        <div class="panel">
+            <h2>Overhead Panel</h2>
+            
+            <div class="switch-panel">
+                <h3 style="color: #00ff00; margin-bottom: 15px;">ELECTRICAL</h3>
+                <div class="switch-row">
+                    <span class="switch-label">Battery</span>
+                    <div class="toggle-switch" id="battery" onclick="toggleSwitch('battery')"></div>
+                    <div class="indicator-light" id="battery-light"></div>
+                </div>
+                <div class="switch-row">
+                    <span class="switch-label">APU Start</span>
+                    <div class="toggle-switch" id="apu-start" onclick="toggleSwitch('apu-start')"></div>
+                    <div class="indicator-light" id="apu-light"></div>
+                </div>
+                <div class="switch-row">
+                    <span class="switch-label">APU Gen</span>
+                    <div class="toggle-switch" id="apu-gen" onclick="toggleSwitch('apu-gen')"></div>
+                    <div class="indicator-light" id="apu-gen-light"></div>
+                </div>
+            </div>
+
+            <div class="switch-panel">
+                <h3 style="color: #00ff00; margin-bottom: 15px;">FUEL</h3>
+                <div class="switch-row">
+                    <span class="switch-label">L Fuel Pump</span>
+                    <div class="toggle-switch" id="fuel-pump-1" onclick="toggleSwitch('fuel-pump-1')"></div>
+                    <div class="indicator-light" id="fuel-1-light"></div>
+                </div>
+                <div class="switch-row">
+                    <span class="switch-label">R Fuel Pump</span>
+                    <div class="toggle-switch" id="fuel-pump-2" onclick="toggleSwitch('fuel-pump-2')"></div>
+                    <div class="indicator-light" id="fuel-2-light"></div>
+                </div>
+            </div>
+
+            <div class="switch-panel">
+                <h3 style="color: #00ff00; margin-bottom: 15px;">LIGHTING</h3>
+                <div class="switch-row">
+                    <span class="switch-label">Beacon</span>
+                    <div class="toggle-switch" id="beacon" onclick="toggleSwitch('beacon')"></div>
+                    <div class="indicator-light" id="beacon-light"></div>
+                </div>
+            </div>
+
+            <div class="switch-panel">
+                <h3 style="color: #00ff00; margin-bottom: 15px;">ENGINE START</h3>
+                <div class="switch-row">
+                    <span class="switch-label">Engine 1</span>
+                    <div class="rotary-switch" id="engine-1-start" onclick="toggleSwitch('engine-1-start')"></div>
+                </div>
+                <div class="switch-row">
+                    <span class="switch-label">Engine 2</span>
+                    <div class="rotary-switch" id="engine-2-start" onclick="toggleSwitch('engine-2-start')"></div>
+                </div>
+            </div>
+
+            <button class="push-button" id="start-engine-1" onclick="startSingleEngine(1)">
+                ▶ START ENGINE 1
+            </button>
+            <button class="push-button" id="start-engine-2" onclick="startSingleEngine(2)">
+                ▶ START ENGINE 2
+            </button>
+        </div>
+
+        <!-- Center Panel - MFD Display -->
+        <div class="panel mfd">
+            <h2 style="color: #00ff00; margin-bottom: 20px; text-align: center;">ENGINE INDICATION & CREW ALERTING SYSTEM</h2>
+            <div class="engine-display">
+                <div class="engine">
+                    <h3>ENGINE 1</h3>
+                    <div class="gauge">
+                        <div class="gauge-needle" id="engine-1-needle"></div>
+                        <div class="gauge-center"></div>
+                        <div class="gauge-labels">
+                            <div style="position: absolute; top: 8px; left: 50%; transform: translateX(-50%);">100</div>
+                            <div style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%);">75</div>
+                            <div style="position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);">0</div>
+                            <div style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%);">25</div>
+                        </div>
+                    </div>
+                    <div class="rpm-value" id="engine-1-rpm">0.0%</div>
+                    <div style="color: #888; font-size: 11px;">N1 FAN SPEED</div>
+                </div>
+                <div class="engine">
+                    <h3>ENGINE 2</h3>
+                    <div class="gauge">
+                        <div class="gauge-needle" id="engine-2-needle"></div>
+                        <div class="gauge-center"></div>
+                        <div class="gauge-labels">
+                            <div style="position: absolute; top: 8px; left: 50%; transform: translateX(-50%);">100</div>
+                            <div style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%);">75</div>
+                            <div style="position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);">0</div>
+                            <div style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%);">25</div>
+                        </div>
+                    </div>
+                    <div class="rpm-value" id="engine-2-rpm">0.0%</div>
+                    <div style="color: #888; font-size: 11px;">N1 FAN SPEED</div>
+                </div>
+            </div>
+            
+            <div class="eicas">
+                <div class="eicas-line">═══ ENGINE PARAMETERS ═══</div>
+                <div class="eicas-line" id="fuel-flow-1">FUEL FLOW 1:    0 LB/HR</div>
+                <div class="eicas-line" id="fuel-flow-2">FUEL FLOW 2:    0 LB/HR</div>
+                <div class="eicas-line" id="oil-press-1">OIL PRESS 1:    0 PSI</div>
+                <div class="eicas-line" id="oil-press-2">OIL PRESS 2:    0 PSI</div>
+                <div class="eicas-line" id="egt-1">EGT 1:         0°C</div>
+                <div class="eicas-line" id="egt-2">EGT 2:         0°C</div>
+                <div class="eicas-line">═══ SYSTEM STATUS ═══</div>
+                <div id="eicas-messages"></div>
+            </div>
+        </div>
+
+        <!-- Right Panel - Status & Checklist -->
+        <div class="panel">
+            <div class="status">
+                <h3 style="color: #00ff00;">STARTUP CHECKLIST</h3>
+                <ul class="checklist" id="checklist">
+                    <li class="current" id="step-1">1. Battery - ON</li>
+                    <li class="pending" id="step-2">2. APU Start - ON</li>
+                    <li class="pending" id="step-3">3. APU Gen - ON</li>
+                    <li class="pending" id="step-4">4. Beacon - ON</li>
+                    <li class="pending" id="step-5">5. L Fuel Pump - ON</li>
+                    <li class="pending" id="step-6">6. Engine 1 Start - GRD</li>
+                    <li class="pending" id="step-7">7. Start Engine 1</li>
+                    <li class="pending" id="step-8">8. R Fuel Pump - ON</li>
+                    <li class="pending" id="step-9">9. Engine 2 Start - GRD</li>
+                    <li class="pending" id="step-10">10. Start Engine 2</li>
+                </ul>
+            </div>
+            
+            <div id="messages"></div>
+        </div>
+    </div>
+
+    <script>
+        let gameState = {
+            battery: false,
+            apuStart: false,
+            apuGen: false,
+            beacon: false,
+            fuelPump1: false,
+            fuelPump2: false,
+            engine1Start: false,
+            engine2Start: false,
+            engine1Running: false,
+            engine2Running: false,
+            engine1RPM: 0,
+            engine2RPM: 0,
+            currentStep: 1
+        };
+
+        let intervals = {};
+
+        function toggleSwitch(switchId) {
+            const element = document.getElementById(switchId);
+            const isOn = element.classList.contains('on');
+            
+            if (!isOn) {
+                element.classList.add('on');
+                
+                // Update indicator lights
+                const lightId = switchId.replace('-start', '-light').replace('apu-gen', 'apu-gen-light').replace('fuel-pump-1', 'fuel-1-light').replace('fuel-pump-2', 'fuel-2-light');
+                const light = document.getElementById(lightId);
+                if (light) light.classList.add('on');
+                
+                // Handle switch logic
+                switch(switchId) {
+                    case 'battery':
+                        gameState.battery = true;
+                        updateEICAS('BATTERY ON', 'normal');
+                        break;
+                    case 'apu-start':
+                        if (gameState.battery) {
+                            gameState.apuStart = true;
+                            updateEICAS('APU STARTING...', 'caution');
+                            setTimeout(() => {
+                                updateEICAS('APU AVAILABLE', 'normal');
+                            }, 3000);
+                        } else {
+                            element.classList.remove('on');
+                            if (light) light.classList.remove('on');
+                            showMessage('Battery must be ON first!', 'warning');
+                            return;
+                        }
+                        break;
+                    case 'apu-gen':
+                        if (gameState.apuStart) {
+                            gameState.apuGen = true;
+                            updateEICAS('APU GEN ON LINE', 'normal');
+                        } else {
+                            element.classList.remove('on');
+                            if (light) light.classList.remove('on');
+                            showMessage('APU must be started first!', 'warning');
+                            return;
+                        }
+                        break;
+                    case 'beacon':
+                        gameState.beacon = true;
+                        updateEICAS('BEACON ON', 'normal');
+                        break;
+                    case 'fuel-pump-1':
+                        gameState.fuelPump1 = true;
+                        updateEICAS('L FUEL PUMP ON', 'normal');
+                        break;
+                    case 'fuel-pump-2':
+                        gameState.fuelPump2 = true;
+                        updateEICAS('R FUEL PUMP ON', 'normal');
+                        break;
+                    case 'engine-1-start':
+                        gameState.engine1Start = true;
+                        updateEICAS('ENG 1 START - GRD', 'normal');
+                        break;
+                    case 'engine-2-start':
+                        gameState.engine2Start = true;
+                        updateEICAS('ENG 2 START - GRD', 'normal');
+                        break;
+                }
+            } else {
+                element.classList.remove('on');
+                const lightId = switchId.replace('-start', '-light').replace('apu-gen', 'apu-gen-light').replace('fuel-pump-1', 'fuel-1-light').replace('fuel-pump-2', 'fuel-2-light');
+                const light = document.getElementById(lightId);
+                if (light) light.classList.remove('on');
+                
+                // Reset state
+                const stateKey = switchId.replace(/-/g, '');
+                if (stateKey === 'apustart') gameState.apuStart = false;
+                else if (stateKey === 'apugen') gameState.apuGen = false;
+                else if (stateKey === 'fuelpump1') gameState.fuelPump1 = false;
+                else if (stateKey === 'fuelpump2') gameState.fuelPump2 = false;
+                else if (stateKey === 'engine1start') gameState.engine1Start = false;
+                else if (stateKey === 'engine2start') gameState.engine2Start = false;
+                else gameState[stateKey] = false;
+            }
+            
+            updateChecklist();
+        }
+
+        function updateChecklist() {
+            const steps = [
+                { id: 'step-1', condition: gameState.battery },
+                { id: 'step-2', condition: gameState.apuStart },
+                { id: 'step-3', condition: gameState.apuGen },
+                { id: 'step-4', condition: gameState.beacon },
+                { id: 'step-5', condition: gameState.fuelPump1 },
+                { id: 'step-6', condition: gameState.engine1Start },
+                { id: 'step-7', condition: gameState.engine1Running },
+                { id: 'step-8', condition: gameState.fuelPump2 },
+                { id: 'step-9', condition: gameState.engine2Start },
+                { id: 'step-10', condition: gameState.engine2Running }
+            ];
+
+            steps.forEach((step, index) => {
+                const element = document.getElementById(step.id);
+                if (step.condition) {
+                    element.className = 'complete';
+                    if (index + 1 > gameState.currentStep) {
+                        gameState.currentStep = index + 2;
+                    }
+                } else if (index + 1 === gameState.currentStep) {
+                    element.className = 'current';
+                } else {
+                    element.className = 'pending';
+                }
+            });
+
+            // Update start buttons
+            updateStartButtons();
+        }
+
+        function updateStartButtons() {
+            const startButton1 = document.getElementById('start-engine-1');
+            const startButton2 = document.getElementById('start-engine-2');
+            
+            const canStartEngine1 = gameState.battery && gameState.apuGen && gameState.fuelPump1 && 
+                                  gameState.engine1Start && !gameState.engine1Running;
+            const canStartEngine2 = gameState.battery && gameState.apuGen && gameState.fuelPump2 && 
+                                  gameState.engine2Start && !gameState.engine2Running;
+            
+            startButton1.disabled = !canStartEngine1;
+            startButton2.disabled = !canStartEngine2;
+            
+            if (gameState.engine1Running) {
+                startButton1.textContent = "✓ ENGINE 1 RUNNING";
+                startButton1.classList.add('success');
+            }
+            if (gameState.engine2Running) {
+                startButton2.textContent = "✓ ENGINE 2 RUNNING";
+                startButton2.classList.add('success');
+            }
+        }
+
+        function startSingleEngine(engineNum) {
+            if (gameState[`engine${engineNum}Running`]) {
+                showMessage(`Engine ${engineNum} is already running!`, 'caution');
+                return;
+            }
+            
+            const fuelPumpOk = gameState[`fuelPump${engineNum}`];
+            const startSwitchOk = gameState[`engine${engineNum}Start`];
+            
+            if (!gameState.battery) {
+                showMessage('Battery must be ON!', 'warning');
+                return;
+            }
+            
+            if (!gameState.apuGen) {
+                showMessage('APU Generator must be ON!', 'warning');
+                return;
+            }
+            
+            if (!fuelPumpOk) {
+                showMessage(`Fuel Pump ${engineNum} must be ON!`, 'warning');
+                return;
+            }
+            
+            if (!startSwitchOk) {
+                showMessage(`Engine ${engineNum} Start switch must be in GRD position!`, 'warning');
+                return;
+            }
+            
+            // All conditions met - start the engine
+            gameState[`engine${engineNum}Running`] = true;
+            updateEICAS(`ENGINE ${engineNum} STARTING...`, 'caution');
+            showMessage(`Engine ${engineNum} startup initiated!`, 'success');
+            
+            // Animate engine startup
+            animateEngineStartup(engineNum);
+            updateChecklist();
+        }
+
+        function animateEngineStartup(engineNum) {
+            const needle = document.getElementById(`engine-${engineNum}-needle`);
+            const rpmDisplay = document.getElementById(`engine-${engineNum}-rpm`);
+            const fuelFlowDisplay = document.getElementById(`fuel-flow-${engineNum}`);
+            const oilPressDisplay = document.getElementById(`oil-press-${engineNum}`);
+            const egtDisplay = document.getElementById(`egt-${engineNum}`);
+            
+            let currentRPM = 0;
+            const targetRPM = 65; // Idle RPM for 737
+            const startupTime = 4000; // 4 seconds startup
+            const interval = 50;
+            const steps = startupTime / interval;
+            const rpmIncrement = targetRPM / steps;
+            
+            const startupInterval = setInterval(() => {
+                currentRPM += rpmIncrement;
+                
+                if (currentRPM >= targetRPM) {
+                    currentRPM = targetRPM;
+                    clearInterval(startupInterval);
+                    updateEICAS(`ENGINE ${engineNum} STABILIZED`, 'normal');
+                    
+                    // Set final values
+                    updateEngineParameters(engineNum, currentRPM);
+                } else {
+                    updateEngineParameters(engineNum, currentRPM);
+                }
+                
+                gameState[`engine${engineNum}RPM`] = currentRPM;
+            }, interval);
+        }
+
+        function updateEngineParameters(engineNum, rpm) {
+            const needle = document.getElementById(`engine-${engineNum}-needle`);
+            const rpmDisplay = document.getElementById(`engine-${engineNum}-rpm`);
+            const fuelFlowDisplay = document.getElementById(`fuel-flow-${engineNum}`);
+            const oilPressDisplay = document.getElementById(`oil-press-${engineNum}`);
+            const egtDisplay = document.getElementById(`egt-${engineNum}`);
+            
+            // Update RPM display
+            rpmDisplay.textContent = `${rpm.toFixed(1)}%`;
+            
+            // Update needle position (0% = -135deg, 100% = 135deg)
+            const needleAngle = -135 + (rpm / 100) * 270;
+            needle.style.transform = `translate(-50%, -100%) rotate(${needleAngle}deg)`;
+            
+            // Update other parameters based on RPM
+            const fuelFlow = rpm > 0 ? Math.round(800 + (rpm * 15)) : 0;
+            const oilPress = rpm > 0 ? Math.round(25 + (rpm * 0.8)) : 0;
+            const egt = rpm > 0 ? Math.round(400 + (rpm * 6)) : 0;
+            
+            fuelFlowDisplay.textContent = `FUEL FLOW ${engineNum}:    ${fuelFlow} LB/HR`;
+            oilPressDisplay.textContent = `OIL PRESS ${engineNum}:    ${oilPress} PSI`;
+            egtDisplay.textContent = `EGT ${engineNum}:         ${egt}°C`;
+        }
+
+        function updateEICAS(message, type) {
+            const messagesDiv = document.getElementById('eicas-messages');
+            const messageElement = document.createElement('div');
+            messageElement.className = `eicas-line eicas-${type}`;
+            messageElement.textContent = message;
+            
+            messagesDiv.appendChild(messageElement);
+            
+            // Keep only last 5 messages
+            while (messagesDiv.children.length > 5) {
+                messagesDiv.removeChild(messagesDiv.firstChild);
+            }
+            
+            // Scroll to bottom
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function showMessage(text, type) {
+            const messagesDiv = document.getElementById('messages');
+            
+            // Remove existing message
+            const existingMessage = messagesDiv.querySelector('.warning, .caution, .success');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type;
+            messageDiv.textContent = text;
+            messagesDiv.appendChild(messageDiv);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.remove();
+                }
+            }, 5000);
+        }
+
+        // Initialize the simulation
+        function initializeSimulation() {
+            updateChecklist();
+            updateEICAS('SYSTEM READY', 'normal');
+            updateEICAS('FOLLOW CHECKLIST PROCEDURES', 'normal');
+            
+            // Initialize engine parameters
+            updateEngineParameters(1, 0);
+            updateEngineParameters(2, 0);
+        }
+
+        // Start the simulation when page loads
+        window.addEventListener('load', initializeSimulation);
+    </script>
+</body>
+</html>
