@@ -1,31 +1,30 @@
-Obstacle Avoidance Game
+# 🛫 737-800 Interactive Engine Startup Trainer
 
-A simple 2D arcade-style obstacle avoidance game built with Python and Pygame. Control a blue square and dodge falling red blocks for as long as you can!
+**Learn how to start up the engines of a Boeing 737-800 — interactively, in your browser.**  
+This HTML-based training tool walks you through each step of the engine startup sequence using clickable cockpit controls, realistic sounds, and simple instructional overlays.
 
-Features
-	•	Smooth player movement
-	•	Randomly spawning falling obstacles
-	•	Collision detection and game over logic
-	•	Live score tracking
+---
 
-Controls
-	•	Left Arrow – Move left
-	•	Right Arrow – Move right
+## ✈️ About the Project
 
-Installation
-	1.	Clone the repository:
+This project is a browser-based simulation to help aspiring pilots, enthusiasts, and aviation students understand and practice the **engine startup procedure** for the **Boeing 737-800**. It’s not a full simulator — instead, it focuses specifically on the flow and interaction required to bring the engines online, with educational guidance at every step.
 
-git clone https://github.com/your-username/obstacle-avoidance-game.git
-cd obstacle-avoidance-game
+---
 
-	2.	Install dependencies:
+## 🎮 Features
 
-pip install pygame
+- 🖱️ **Interactive switches and controls**  
+- 📘 **Step-by-step instructions with overlays**  
+- 🔊 **Realistic audio cues (APU, engines, etc.)**  
+- 🧠 **Built-in explanations for each action**  
+- 💻 **Works offline — 100% HTML/JS/CSS**
 
-	3.	Run the game:
+---
 
-python game.py
+## 🚀 Getting Started
 
-Requirements
-	•	Python 3.6+
-	•	Pygame
+### 🔧 Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/737-800-startup-trainer.git
