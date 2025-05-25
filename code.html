@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boeing 737 Cockpit Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a, #1a1a1a);
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .cockpit-container {
+            display: grid;
+            grid-template-areas: 
+                "overhead overhead overhead"
+                "left-panel main-panel right-panel"
+                "pedestal pedestal pedestal";
+            grid-template-rows: 150px 1fr 120px;
+            grid-template-columns: 300px 1fr 300px;
+            height: 100vh;
+            gap: 8px;
+            padding: 8px;
+        }
+
+        /* Overhead Panel */
+        .overhead-panel {
+            grid-area: overhead;
+            background: linear-gradient(145deg, #2a2a3e, #1f1f32);
+            border: 3px solid #444;
+            border-radius: 12px;
+            padding: 10px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .overhead-section {
+            text-align: center;
+            padding: 0 15px;
+        }
+
+        .overhead-section h4 {
+            color: #00ff00;
+            font-size: 10px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        /* Left Panel - Captain's Side */
+        .left-panel {
+            grid-area: left-panel;
+            background: linear-gradient(145deg, #2a2a3e, #1f1f32);
+            border: 3px solid #444;
+            border-radius: 12px;
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        /* Main Panel - Instruments */
+        .main-panel {
+            grid-area: main-panel;
+            display: grid;
+            grid-template-areas: 
+                "pfd-capt nav-display pfd-fo"
+                "engine-display engine-display engine-display";
+            grid-template-rows: 2fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+        }
+
+        /* Right Panel - First Officer's Side */
+        .right-panel {
+            grid-area: right-panel;
+            background: linear-gradient(145deg, #2a2a3e, #1f1f32);
+            border: 3px solid #444;
+            border-radius: 12px;
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        /* Pedestal */
+        .pedestal {
+            grid-area: pedestal;
+            background: linear-gradient(145deg, #2a2a3e, #1f1f32);
+            border: 3px solid #444;
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        /* Display Screens */
+        .display-screen {
+            background: linear-gradient(145deg, #000, #111);
+            border: 4px solid #333;
+            border-radius: 8px;
+            position: relative;
+            box-shadow: inset 0 3px 10px rgba(0,0,0,0.5);
+        }
+
+        .pfd {
+            grid-area: pfd-capt;
+        }
+
+        .pfd-fo {
+            grid-area: pfd-fo;
+        }
+
+        .nav-display {
+            grid-area: nav-display;
+            background: linear-gradient(145deg, #000, #0a1a0a);
+        }
+
+        .engine-display {
+            grid-area: engine-display;
+            padding: 15px;
+        }
+
+        /* Artificial Horizon */
+        .attitude-indicator {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: linear-gradient(to bottom, #4a90e2 0%, #4a90e2 50%, #8b4513 50%, #8b4513 100%);
+            position: relative;
+            margin: 20px auto;
+            border: 3px solid #333;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .attitude-indicator::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 20%;
+            right: 20%;
+            height: 2px;
+            background: #fff;
+            transform: translateY(-50%);
+            z-index: 2;
+        }
+
+        .attitude-indicator::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 8px;
+            height: 8px;
+            background: #ff0000;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 3;
+        }
+
+        /* Altimeter */
+        .altimeter {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #000 0%, #1a1a1a 100%);
+            border: 3px solid #333;
+            position: relative;
+            margin: 10px auto;
+            box-shadow: inset 0 3px 8px rgba(0,0,0,0.5);
+        }
+
+        .altimeter-needle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 2px;
+            height: 40px;
+            background: #fff;
+            transform-origin: bottom center;
+            transform: translate(-50%, -100%) rotate(0deg);
+            transition: transform 0.3s ease;
+        }
+
+        .altimeter-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 8px;
+            height: 8px;
+            background: #888;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Switch Styles */
+        .switch-panel {
+            background: linear-gradient(145deg, #3a3a4e, #2f2f42);
+            border: 2px solid #555;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 8px 0;
+            box-shadow: inset 0 1px 4px rgba(0,0,0,0.4);
+        }
+
+        .switch-row {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            justify-content: space-between;
+        }
+
+        .switch-label {
+            font-size: 10px;
+            color: #ccc;
+            font-weight: bold;
+            text-transform: uppercase;
+            min-width: 80px;
+        }
+
+        .toggle-switch {
+            width: 40px;
+            height: 16px;
+            background: linear-gradient(145deg, #666, #444);
+            border: 2px solid #333;
+            border-radius: 8px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toggle-switch.on {
+            background: linear-gradient(145deg, #00aa00, #008800);
+            box-shadow: 0 0 6px rgba(0,170,0,0.3);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 1px;
+            left: 1px;
+            width: 12px;
+            height: 12px;
+            background: linear-gradient(145deg, #fff, #ddd);
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+
+        .toggle-switch.on::after {
+            transform: translateX(22px);
+        }
+
+        /* Push Buttons */
+        .push-button {
+            padding: 8px 12px;
+            background: linear-gradient(145deg, #444, #333);
+            border: 2px solid #555;
+            border-radius: 6px;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 4px;
+            transition: all 0.1s;
+            text-transform: uppercase;
+        }
+
+        .push-button:hover {
+            background: linear-gradient(145deg, #555, #444);
+            transform: translateY(-1px);
+        }
+
+        .push-button:active {
+            transform: translateY(1px);
+        }
+
+        .push-button.active {
+            background: linear-gradient(145deg, #00aa00, #008800);
+            box-shadow: 0 0 6px rgba(0,170,0,0.3);
+        }
+
+        /* Rotary Knobs */
+        .rotary-knob {
+            width: 30px;
+            height: 30px;
+            background: radial-gradient(circle, #555 0%, #333 100%);
+            border: 2px solid #222;
+            border-radius: 50%;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 0 auto;
+        }
+
+        .rotary-knob::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 50%;
+            width: 2px;
+            height: 8px;
+            background: #fff;
+            transform: translateX(-50%);
+        }
+
+        /* Engine Gauges */
+        .engine-gauges {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+        }
+
+        .engine-gauge {
+            text-align: center;
+            min-width: 150px;
+        }
+
+        .gauge {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #000 0%, #1a1a1a 100%);
+            border: 3px solid #333;
+            position: relative;
+            margin: 10px auto;
+            box-shadow: inset 0 3px 8px rgba(0,0,0,0.5);
+        }
+
+        .gauge-needle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 2px;
+            height: 35px;
+            background: linear-gradient(to top, #ff0000, #ff6666);
+            transform-origin: bottom center;
+            transform: translate(-50%, -100%) rotate(-90deg);
+            transition: transform 0.3s ease;
+        }
+
+        .gauge-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 8px;
+            height: 8px;
+            background: #888;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .gauge-value {
+            color: #00ff00;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        /* Navigation Display */
+        .nav-map {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .nav-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(0,255,0,0.2) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,255,0,0.2) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .aircraft-symbol {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            transform: translate(-50%, -50%);
+        }
+
+        /* Status Indicators */
+        .status-light {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #333;
+            border: 1px solid #222;
+            margin: 0 4px;
+            display: inline-block;
+        }
+
+        .status-light.green { background: #00ff00; box-shadow: 0 0 6px rgba(0,255,0,0.6); }
+        .status-light.red { background: #ff0000; box-shadow: 0 0 6px rgba(255,0,0,0.6); }
+        .status-light.amber { background: #ff9900; box-shadow: 0 0 6px rgba(255,153,0,0.6); }
+
+        /* PFD Display Elements */
+        .pfd-content {
+            padding: 15px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-around;
+        }
+
+        .speed-tape {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 150px;
+            width: 40px;
+            background: rgba(0,0,0,0.8);
+            border: 1px solid #333;
+            color: #fff;
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+            border-radius: 4px;
+        }
+
+        .altitude-tape {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 150px;
+            width: 50px;
+            background: rgba(0,0,0,0.8);
+            border: 1px solid #333;
+            color: #fff;
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+            border-radius: 4px;
+        }
+
+        .heading-indicator {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 30px;
+            background: rgba(0,0,0,0.8);
+            border: 1px solid #333;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        /* Throttle Levers */
+        .throttle-lever {
+            height: 60px;
+            width: 20px;
+            background: linear-gradient(to top, #333, #666);
+            margin: 0 auto;
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+            border: 2px solid #555;
+        }
+
+        .throttle-indicator {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: #00aa00;
+            border-radius: 0 0 8px 8px;
+            transition: height 0.3s;
+            box-shadow: 0 0 10px rgba(0,170,0,0.3);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .cockpit-container {
+                grid-template-columns: 250px 1fr 250px;
+            }
+        }
+
+        h3, h4 {
+            color: #00ff00;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+
+        .section-title {
+            color: #00ff00;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .flap-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .flap-detent {
+            width: 30px;
+            height: 8px;
+            background: #333;
+            border: 1px solid #555;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .flap-detent.active {
+            background: #00ff00;
+            box-shadow: 0 0 4px rgba(0,255,0,0.5);
+        }
+
+        .gear-indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .gear-light {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #333;
+            border: 2px solid #555;
+            transition: all 0.3s;
+        }
+
+        .gear-light.down {
+            background: #00ff00;
+            box-shadow: 0 0 10px rgba(0,255,0,0.5);
+        }
+
+        .gear-light.transit {
+            background: #ff9900;
+            box-shadow: 0 0 10px rgba(255,153,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="cockpit-container">
+        <!-- Overhead Panel -->
+        <div class="overhead-panel">
+            <div class="overhead-section">
+                <h4>Electrical</h4>
+                <div class="switch-row">
+                    <span class="switch-label">Battery</span>
+                    <div class="toggle-switch" id="battery" onclick="toggleSwitch('battery')"></div>
+                </div>
+                <div class="switch-row">
+                    <span class="switch-label">APU</span>
+                    <div class="toggle-switch" id="apu" onclick="toggleSwitch('apu')"></div>
+                </div>
+            </div>
+            
+            <div class="overhead-section">
+                <h4>Fuel</h4>
+                <div class="switch-row">
+                    <span class="switch-label">L Pump</span>
+                    <div class="toggle-switch" id="fuel-l" onclick="toggleSwitch('fuel-l')"></div>
+                </div>
+                <div class="switch-row">
+                    <span class="switch-label">R Pump</span>
+                    <div class="toggle-switch" id="fuel-r" onclick="toggleSwitch('fuel-r')"></div>
+                </div>
+            </div>
+            
+            <div class="overhead-section">
+                <h4>Lighting</h4>
+                <div class="switch-row">
+                    <span class="switch-label">Beacon</span>
+                    <div class="toggle-switch" id="beacon" onclick="toggleSwitch('beacon')"></div>
+                </div>
+                <div class="switch-row">
+                    <span class="switch-label">Strobe</span>
+                    <div class="toggle-switch" id="strobe" onclick="toggleSwitch('strobe')"></div>
+                </div>
+            </div>
+            
+            <div class="overhead-section">
+                <h4>Air Cond</h4>
+                <div class="switch-row">
+                    <span class="switch-label">Pack L</span>
+                    <div class="toggle-switch" id="pack-l" onclick="toggleSwitch('pack-l')"></div>
+                </div>
+                <div class="switch-row">
+                    <span class="switch-label">Pack R</span>
+                    <div class="toggle-switch" id="pack-r" onclick="toggleSwitch('pack-r')"></div>
+                </div>
+            </div>
+            
+            <div class="overhead-section">
+                <h4>Hydraulics</h4>
+                <div class="switch-row">
+                    <span class="switch-label">A Pump</span>
+                    <div class="toggle-switch" id="hyd-a" onclick="toggleSwitch('hyd-a')"></div>
+                </div>
+                <div class="switch-row">
+                    <span class="switch-label">B Pump</span>
+                    <div class="toggle-switch" id="hyd-b" onclick="toggleSwitch('hyd-b')"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Left Panel - Captain's Side -->
+        <div class="left-panel">
+            <h3>Captain Controls</h3>
+            
+            <div class="switch-panel">
+                <div class="section-title">Flight Controls</div>
+                <div class="switch-row">
+                    <span class="switch-label">A/P Master</span>
+                    <div class="push-button" id="ap-master" onclick="toggleButton('ap-master')">A/P</div>
+                </div>
+                <div class="switch-row">
+                    <span class="switch-label">A/T</span>
+                    <div class="push-button" id="autothrottle" onclick="toggleButton('autothrottle')">A/T</div>
+                </div>
+                <div class="switch-row">
+                    <span class="switch-label">HDG SEL</span>
+                    <div class="push-button" id="hdg-sel" onclick="toggleButton('hdg-sel')">HDG</div>
+                </div>
+                <div class="switch-row">
+                    <span class="switch-label">Alt Hold</span>
+                    <div class="push-button" id="alt-hold" onclick="toggleButton('alt-hold')">ALT</div>
+                </div>
+            </div>
+            
+            <div class="switch-panel">
+                <div class="section-title">Navigation</div>
+                <div class="switch-row">
+                    <span class="switch-label">VOR 1</span>
+                    <div class="rotary-knob" id="vor1" onclick="rotateKnob('vor1')"></div>
+                </div>
+                <div class="switch-row">
+                    <span class="switch-label">ADF</span>
+                    <div class="rotary-knob" id="adf" onclick="rotateKnob('adf')"></div>
+                </div>
+            </div>
+            
+            <div class="switch-panel">
+                <div class="section-title">Engine Start</div>
+                <div class="switch-row">
+                    <span class="switch-label">Engine 1</span>
+                    <div class="push-button" id="eng1-start" onclick="startEngine(1)">START</div>
+                </div>
+                <div class="switch-row">
+                    <span class="switch-label">Engine 2</span>
+                    <div class="push-button" id="eng2-start" onclick="startEngine(2)">START</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Panel - Displays -->
+        <div class="main-panel">
+            <!-- Captain's PFD -->
+            <div class="display-screen pfd">
+                <div class="pfd-content">
+                    <div class="attitude-indicator" id="attitude-capt"></div>
+                    <div class="speed-tape">
+                        <div>200</div>
+                        <div>180</div>
+                        <div id="airspeed">160</div>
+                        <div>140</div>
+                        <div>120</div>
+                    </div>
+                    <div class="altitude-tape">
+                        <div>12000</div>
+                        <div>11000</div>
+                        <div id="altitude">10000</div>
+                        <div>9000</div>
+                        <div>8000</div>
+                    </div>
+                    <div class="heading-indicator">
+                        <span id="heading">090°</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Display -->
+            <div class="display-screen nav-display">
+                <div class="nav-map">
+                    <div class="nav-grid"></div>
+                    <div class="aircraft-symbol"></div>
+                </div>
+            </div>
+
+            <!-- First Officer's PFD -->
+            <div class="display-screen pfd-fo">
+                <div class="pfd-content">
+                    <div class="attitude-indicator" id="attitude-fo"></div>
+                    <div class="speed-tape">
+                        <div>200</div>
+                        <div>180</div>
+                        <div id="airspeed-fo">160</div>
+                        <div>140</div>
+                        <div>120</div>
+                    </div>
+                    <div class="altitude-tape">
+                        <div>12000</div>
+                        <div>11000</div>
+                        <div id="altitude-fo">10000</div>
+                        <div>9000</div>
+                        <div>8000</div>
+                    </div>
+                    <div class="heading-indicator">
+                        <span id="heading-fo">090°</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Engine Display -->
+            <div class="display-screen engine-display">
+                <div class="engine-gauges">
+                    <div class="engine-gauge">
+                        <h4>Engine 1</h4>
+                        <div class="gauge">
+                            <div class="gauge-needle" id="n1-1"></div>
+                            <div class="gauge-center"></div>
+                        </div>
+                        <div class="gauge-value" id="n1-1-value">0%</div>
+                        <div style="font-size: 10px; color: #888;">N1</div>
+                        
+                        <div class="gauge" style="margin-top: 20px;">
+                            <div class="gauge-needle" id="egt-1"></div>
+                            <div class="gauge-center"></div>
+                        </div>
+                        <div class="gauge-value" id="egt-1-value">0°C</div>
+                        <div style="font-size: 10px; color: #888;">EGT</div>
+                    </div>
+                    
+                    <div class="engine-gauge">
+                        <h4>Engine 2</h4>
+                        <div class="gauge">
+                            <div class="gauge-needle" id="n1-2"></div>
+                            <div class="gauge-center"></div>
+                        </div>
+                        <div class="gauge-value" id="n1-2-value">0%</div>
+                        <div style="font-size: 10px; color: #888;">N1</div>
+                        
+                        <div class="gauge" style="margin-top: 20px;">
+                            <div class="gauge-needle" id="egt-2"></div>
+                            <div class="gauge-center"></div>
+                        </div>
+                        <div class="gauge-value" id="egt-2-value">0°C</div>
+                        <div style="font-size: 10px; color: #888;">EGT</div>
+                    </div>
+                    
+                    <div style="margin-left: 20px;">
+                        <h4>System Status</h4>
+                        <div style="margin: 10px 0;">
+                            <span>Battery:</span>
+                            <div class="status-light" id="status-battery"></div>
+                        </div>
+                        <div style="margin: 10px 0;">
+                            <span>APU:</span>
+                            <div class="status-light" id="status-apu"></div>
+                        </div>
+                        <div style="margin: 10px 0;">
+                            <span>Fuel L:</span>
+                            <div class="status-light" id="status-fuel-l"></div>
+                        </div>
+                        <div style="margin: 10px 0;">
+                            <span>Fuel R:</span>
+                            <div class="status-light" id="status-fuel-r"></div>
+                        </div>
+                        <div style="margin: 10px 0;">
+                            <span>Eng 1:</span>
+                            <div class="status-light" id="status-eng1"></div>
+                        </div>
+                        <div style="margin: 10px 0;">
+                            <span>Eng 2:</span>
+                            <div class="status-light" id="status-eng2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel - First Officer's Side -->
+        <div class="right-panel">
+            <h3>First Officer Controls</h3>
+            
+            <div class="switch-panel">
+                <div class="section-title">Communications</div>
+                <div class="switch-row">
+                    <span class="switch-label">COM 1</span>
+                    <div class="rotary-knob" id="com1" onclick="rotateKnob('com1')"></div>
+                </div>
+                <div class="switch-row">
+                    <span class="switch-label">COM 2</span>
+                    <div class="rotary-knob" id="com2" onclick="rotateKnob('com2')"></div>
+                </div>
+                <div class="switch-row">
+                    <span class="switch-label">Transponder</span>
+                    <div class="rotary-knob" id="xpdr" onclick="rotateKnob('xpdr')"></div>
+                </div>
+            </div>
+            
+            <div class="switch-panel">
+                <div class="section-title">Pressurization</div>
+                <div class="switch-row">
+                    <span class="switch-label">Outflow</span>
+                    <div class="rotary-knob" id="outflow" onclick="rotateKnob('outflow')"></div>
+                </div>
+                <div class="switch-row">
+                    <span class="switch-label">Cabin Alt</span>
+                    <div class="gauge-value" id="cabin-alt">0 ft</div>
+                </div>
+            </div>
+            
+            <div class="switch-panel">
+                <div class="section-title">Warnings</div>
+                <div id="warning-lights">
+                    <div style="margin: 5px 0;">
+                        <span>Master Caution:</span>
+                        <div class="status-light amber" id="master-caution"></div>
+                    </div>
+                    <div style="margin: 5px 0;">
+                        <span>Fire Warning:</span>
+                        <div class="status-light" id="fire-warn"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pedestal -->
+        <div class="pedestal">
+            <div>
+                <h4>Throttles</h4>
+                <div style="display: flex; gap: 20px;">
+                    <div style="text-align: center;">
+                        <div class="throttle-lever" onclick="adjustThrottle(1)">
+                            <div id="throttle-1" class="throttle-indicator" style="height: 30%;"></div>
+                        </div>
+                        <div style="font-size: 10px; margin-top: 5px;">ENG 1</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div class="throttle-lever" onclick="adjustThrottle(2)">
+                            <div id="throttle-2" class="throttle-indicator" style="height: 30%;"></div>
+                        </div>
+                        <div style="font-size: 10px; margin-top: 5px;">ENG 2</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div>
+                <h4>Flaps</h4>
+                <div class="flap-indicator">
+                    <span style="font-size: 10px;">UP</span>
+                    <div class="flap-detent active" id="flap-0" onclick="setFlaps(0)"></div>
+                    <div class="flap-detent" id="flap-1" onclick="setFlaps(1)"></div>
+                    <div class="flap-detent" id="flap-5" onclick="setFlaps(5)"></div>
+                    <div class="flap-detent" id="flap-10" onclick="setFlaps(10)"></div>
+                    <div class="flap-detent" id="flap-15" onclick="setFlaps(15)"></div>
+                    <div class="flap-detent" id="flap-25" onclick="setFlaps(25)"></div>
+                    <div class="flap-detent" id="flap-30" onclick="setFlaps(30)"></div>
+                    <span style="font-size: 10px;">30</span>
+                </div>
+                <div style="text-align: center; margin-top: 5px;">
+                    <span style="font-size: 12px; color: #00ff00;" id="flap-display">0°</span>
+                </div>
+            </div>
+            
+            <div>
+                <h4>Landing Gear</h4>
+                <div class="gear-indicator">
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <div style="text-align: center;">
+                            <div class="gear-light down" id="gear-nose"></div>
+                            <div style="font-size: 8px; margin-top: 2px;">NOSE</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div class="gear-light down" id="gear-left"></div>
+                            <div style="font-size: 8px; margin-top: 2px;">LEFT</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div class="gear-light down" id="gear-right"></div>
+                            <div style="font-size: 8px; margin-top: 2px;">RIGHT</div>
+                        </div>
+                    </div>
+                    <div class="push-button" id="gear-lever" onclick="toggleGear()">GEAR</div>
+                </div>
+            </div>
+            
+            <div>
+                <h4>Speed Brake</h4>
+                <div style="text-align: center;">
+                    <div style="height: 40px; width: 80px; background: linear-gradient(to right, #333, #666); margin: 0 auto; border-radius: 5px; position: relative; cursor: pointer;" onclick="adjustSpeedBrake()">
+                        <div id="speedbrake-lever" style="position: absolute; left: 0; top: 50%; width: 20px; height: 20px; background: #fff; border-radius: 50%; transform: translateY(-50%); transition: left 0.3s;"></div>
+                    </div>
+                    <div style="font-size: 10px; margin-top: 5px;">
+                        <span id="speedbrake-display">ARMED</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // System state variables
+        let systemState = {
+            battery: false,
+            apu: false,
+            fuelPumps: { left: false, right: false },
+            engines: { 
+                engine1: { running: false, n1: 0, egt: 0, starting: false },
+                engine2: { running: false, n1: 0, egt: 0, starting: false }
+            },
+            lights: { beacon: false, strobe: false },
+            airCond: { packL: false, packR: false },
+            hydraulics: { pumpA: false, pumpB: false },
+            autopilot: { master: false, autothrottle: false, hdgSel: false, altHold: false },
+            throttles: { engine1: 30, engine2: 30 },
+            flaps: 0,
+            gear: { position: 'down', nose: true, left: true, right: true },
+            speedBrake: 0,
+            flight: {
+                airspeed: 160,
+                altitude: 10000,
+                heading: 90,
+                verticalSpeed: 0
+            }
+        };
+
+        // Toggle switch function
+        function toggleSwitch(switchId) {
+            const switchElement = document.getElementById(switchId);
+            const statusElement = document.getElementById(`status-${switchId}`);
+            
+            switchElement.classList.toggle('on');
+            const isOn = switchElement.classList.contains('on');
+            
+            // Update system state
+            switch(switchId) {
+                case 'battery':
+                    systemState.battery = isOn;
+                    break;
+                case 'apu':
+                    systemState.apu = isOn;
+                    break;
+                case 'fuel-l':
+                    systemState.fuelPumps.left = isOn;
+                    break;
+                case 'fuel-r':
+                    systemState.fuelPumps.right = isOn;
+                    break;
+                case 'beacon':
+                    systemState.lights.beacon = isOn;
+                    break;
+                case 'strobe':
+                    systemState.lights.strobe = isOn;
+                    break;
+                case 'pack-l':
+                    systemState.airCond.packL = isOn;
+                    break;
+                case 'pack-r':
+                    systemState.airCond.packR = isOn;
+                    break;
+                case 'hyd-a':
+                    systemState.hydraulics.pumpA = isOn;
+                    break;
+                case 'hyd-b':
+                    systemState.hydraulics.pumpB = isOn;
+                    break;
+            }
+            
+            // Update status light
+            if (statusElement) {
+                statusElement.className = 'status-light' + (isOn ? ' green' : '');
+            }
+            
+            updateSystemStatus();
+        }
+
+        // Toggle button function
+        function toggleButton(buttonId) {
+            const button = document.getElementById(buttonId);
+            button.classList.toggle('active');
+            const isActive = button.classList.contains('active');
+            
+            switch(buttonId) {
+                case 'ap-master':
+                    systemState.autopilot.master = isActive;
+                    break;
+                case 'autothrottle':
+                    systemState.autopilot.autothrottle = isActive;
+                    break;
+                case 'hdg-sel':
+                    systemState.autopilot.hdgSel = isActive;
+                    break;
+                case 'alt-hold':
+                    systemState.autopilot.altHold = isActive;
+                    break;
+            }
+        }
+
+        // Rotate knob function
+        function rotateKnob(knobId) {
+            const knob = document.getElementById(knobId);
+            const currentRotation = parseInt(knob.style.transform?.match(/rotate\((\d+)deg\)/)?.[1] || 0);
+            const newRotation = (currentRotation + 30) % 360;
+            knob.style.transform = `rotate(${newRotation}deg)`;
+        }
+
+        // Start engine function
+        function startEngine(engineNum) {
+            const button = document.getElementById(`eng${engineNum}-start`);
+            const engine = systemState.engines[`engine${engineNum}`];
+            
+            if (!systemState.battery || engine.running || engine.starting) return;
+            
+            button.classList.add('active');
+            engine.starting = true;
+            
+            // Engine start sequence
+            let startTime = 0;
+            const startInterval = setInterval(() => {
+                startTime += 100;
+                
+                if (startTime < 3000) {
+                    // Starter engaged
+                    engine.n1 = Math.min(25, startTime / 120);
+                    engine.egt = Math.min(400, startTime / 7.5);
+                } else if (startTime < 8000) {
+                    // Light off and acceleration
+                    engine.n1 = 25 + ((startTime - 3000) / 5000) * 50;
+                    engine.egt = 400 + ((startTime - 3000) / 5000) * 200;
+                } else {
+                    // Stabilize at idle
+                    engine.n1 = 75;
+                    engine.egt = 600;
+                    engine.running = true;
+                    engine.starting = false;
+                    button.classList.remove('active');
+                    document.getElementById(`status-eng${engineNum}`).className = 'status-light green';
+                    clearInterval(startInterval);
+                }
+                
+                updateEngineDisplays();
+            }, 100);
+        }
+
+        // Adjust throttle function
+        function adjustThrottle(engineNum) {
+            const currentThrottle = systemState.throttles[`engine${engineNum}`];
+            const newThrottle = (currentThrottle + 20) % 101;
+            systemState.throttles[`engine${engineNum}`] = newThrottle;
+            
+            const throttleElement = document.getElementById(`throttle-${engineNum}`);
+            throttleElement.style.height = `${newThrottle}%`;
+            
+            // Update engine parameters based on throttle
+            const engine = systemState.engines[`engine${engineNum}`];
+            if (engine.running) {
+                engine.n1 = 75 + (newThrottle / 100) * 25; // 75-100% N1
+                engine.egt = 600 + (newThrottle / 100) * 300; // 600-900°C EGT
+                updateEngineDisplays();
+            }
+        }
+
+        // Set flaps function
+        function setFlaps(flapSetting) {
+            // Remove active class from all flap detents
+            document.querySelectorAll('.flap-detent').forEach(detent => {
+                detent.classList.remove('active');
+            });
+            
+            // Add active class to selected detent
+            document.getElementById(`flap-${flapSetting}`).classList.add('active');
+            
+            systemState.flaps = flapSetting;
+            document.getElementById('flap-display').textContent = `${flapSetting}°`;
+        }
+
+        // Toggle gear function
+        function toggleGear() {
+            const gearLever = document.getElementById('gear-lever');
+            const isDown = systemState.gear.position === 'down';
+            
+            systemState.gear.position = isDown ? 'up' : 'down';
+            gearLever.classList.toggle('active', isDown);
+            
+            // Animate gear transition
+            const gears = ['nose', 'left', 'right'];
+            gears.forEach((gear, index) => {
+                const gearLight = document.getElementById(`gear-${gear}`);
+                
+                setTimeout(() => {
+                    gearLight.className = 'gear-light transit';
+                    
+                    setTimeout(() => {
+                        if (systemState.gear.position === 'down') {
+                            gearLight.className = 'gear-light down';
+                            systemState.gear[gear] = true;
+                        } else {
+                            gearLight.className = 'gear-light';
+                            systemState.gear[gear] = false;
+                        }
+                    }, 2000);
+                }, index * 500);
+            });
+        }
+
+        // Adjust speed brake function
+        function adjustSpeedBrake() {
+            const currentPosition = systemState.speedBrake;
+            const newPosition = (currentPosition + 25) % 101;
+            systemState.speedBrake = newPosition;
+            
+            const lever = document.getElementById('speedbrake-lever');
+            const display = document.getElementById('speedbrake-display');
+            
+            lever.style.left = `${(newPosition / 100) * 60}px`;
+            
+            if (newPosition === 0) {
+                display.textContent = 'ARMED';
+            } else {
+                display.textContent = `${newPosition}%`;
+            }
+        }
+
+        // Update engine displays
+        function updateEngineDisplays() {
+            for (let i = 1; i <= 2; i++) {
+                const engine = systemState.engines[`engine${i}`];
+                
+                // Update N1 gauge
+                const n1Needle = document.getElementById(`n1-${i}`);
+                const n1Value = document.getElementById(`n1-${i}-value`);
+                const n1Rotation = -90 + (engine.n1 / 100) * 180;
+                n1Needle.style.transform = `translate(-50%, -100%) rotate(${n1Rotation}deg)`;
+                n1Value.textContent = `${Math.round(engine.n1)}%`;
+                
+                // Update EGT gauge
+                const egtNeedle = document.getElementById(`egt-${i}`);
+                const egtValue = document.getElementById(`egt-${i}-value`);
+                const egtRotation = -90 + (engine.egt / 1000) * 180;
+                egtNeedle.style.transform = `translate(-50%, -100%) rotate(${egtRotation}deg)`;
+                egtValue.textContent = `${Math.round(engine.egt)}°C`;
+            }
+        }
+
+        // Update system status
+        function updateSystemStatus() {
+            // Update master caution logic
+            const masterCaution = document.getElementById('master-caution');
+            let cautionActive = false;
+            
+            // Check for caution conditions
+            if (!systemState.battery && (systemState.engines.engine1.running || systemState.engines.engine2.running)) {
+                cautionActive = true;
+            }
+            
+            masterCaution.style.display = cautionActive ? 'inline-block' : 'none';
+        }
+
+        // Flight dynamics simulation
+        function updateFlightData() {
+            // Simple flight simulation
+            if (systemState.engines.engine1.running || systemState.engines.engine2.running) {
+                const totalThrust = (systemState.throttles.engine1 + systemState.throttles.engine2) / 2;
+                
+                // Update airspeed based on thrust
+                if (totalThrust > 50) {
+                    systemState.flight.airspeed = Math.min(250, 120 + (totalThrust - 50) * 2.6);
+                } else {
+                    systemState.flight.airspeed = Math.max(80, systemState.flight.airspeed - 0.5);
+                }
+                
+                // Update altitude (simplified)
+                if (systemState.autopilot.altHold) {
+                    systemState.flight.verticalSpeed = 0;
+                } else if (totalThrust > 70) {
+                    systemState.flight.verticalSpeed = (totalThrust - 70) * 50;
+                } else if (totalThrust < 40) {
+                    systemState.flight.verticalSpeed = (totalThrust - 40) * 20;
+                } else {
+                    systemState.flight.verticalSpeed = 0;
+                }
+                
+                systemState.flight.altitude += systemState.flight.verticalSpeed / 60;
+                systemState.flight.altitude = Math.max(0, systemState.flight.altitude);
+            }
+            
+            // Update displays
+            document.getElementById('airspeed').textContent = Math.round(systemState.flight.airspeed);
+            document.getElementById('airspeed-fo').textContent = Math.round(systemState.flight.airspeed);
+            document.getElementById('altitude').textContent = Math.round(systemState.flight.altitude);
+            document.getElementById('altitude-fo').textContent = Math.round(systemState.flight.altitude);
+            
+            // Update cabin altitude (simplified)
+            const cabinAlt = Math.max(0, (systemState.flight.altitude - 8000) * 0.1);
+            document.getElementById('cabin-alt').textContent = `${Math.round(cabinAlt)} ft`;
+        }
+
+        // Initialize system
+        function initializeSystem() {
+            // Set initial gear position
+            systemState.gear.position = 'down';
+            
+            // Start flight data updates
+            setInterval(updateFlightData, 1000);
+            
+            // Initialize displays
+            updateEngineDisplays();
+            updateSystemStatus();
+        }
+
+        // Start the simulation
+        initializeSystem();
+    </script>
+</body>
+</html>
