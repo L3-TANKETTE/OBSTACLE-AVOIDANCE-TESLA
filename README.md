@@ -20,11 +20,3 @@ This project is a browser-based simulation to help aspiring pilots, enthusiasts,
 - 💻 **Works offline — 100% HTML/JS/CSS**
 
 ---
-
-## 🚀 Getting Started
-
-### 🔧 Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/737-800-startup-trainer.git
